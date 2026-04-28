@@ -111,40 +111,40 @@ export default function RefundQueuePage() {
             const overLimit = r.amount > STAFF_LIMIT;
             return (
               <div key={r.id} className="flex items-center gap-4 px-5 py-4 border-b border-gray-50 last:border-0">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-bold text-gray-900">{r.id} · {r.order}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <p className="text-sm font-bold text-gray-900 truncate">{r.id} · {r.order}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${
                       r.status === "approved" ? "bg-green-50 text-green-700" :
                       r.status === "rejected" ? "bg-red-50 text-red-600" :
                       r.status === "escalated" ? "bg-orange-50 text-orange-600" :
                       "bg-yellow-50 text-yellow-700"
                     }`}>{r.status}</span>
                     {overLimit && r.status === "pending" && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-bold border border-red-100">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-bold border border-red-100 whitespace-nowrap">
                         Over limit
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">{r.customer} · {r.reason}</p>
+                  <p className="text-xs text-gray-500 truncate">{r.customer} · {r.reason}</p>
                 </div>
-                <span className="text-sm font-black text-gray-900">₹{r.amount}</span>
+                <span className="text-sm font-black text-gray-900 whitespace-nowrap">₹{r.amount}</span>
                 {r.status === "pending" && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-shrink-0">
                     {!overLimit ? (
                       <>
                         <button onClick={() => approve(r.id)} disabled={actionLoading === r.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-xl hover:bg-green-700 transition disabled:opacity-60">
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-xl hover:bg-green-700 transition disabled:opacity-60 whitespace-nowrap">
                           <CheckCircle size={12} /> {actionLoading === r.id ? "..." : "Approve"}
                         </button>
                         <button onClick={() => reject(r.id)} disabled={actionLoading === r.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-50 transition disabled:opacity-60">
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-50 transition disabled:opacity-60 whitespace-nowrap">
                           <XCircle size={12} /> Reject
                         </button>
                       </>
                     ) : (
                       <button onClick={() => setEscalateId(r.id)} disabled={actionLoading === r.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-orange-200 text-orange-600 text-xs font-bold rounded-xl hover:bg-orange-50 transition disabled:opacity-60">
+                        className="flex items-center gap-1.5 px-3 py-1.5 border border-orange-200 text-orange-600 text-xs font-bold rounded-xl hover:bg-orange-50 transition disabled:opacity-60 whitespace-nowrap">
                         <AlertTriangle size={12} /> Escalate to Admin
                       </button>
                     )}

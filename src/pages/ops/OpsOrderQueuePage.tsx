@@ -121,15 +121,15 @@ export default function OpsOrderQueuePage() {
       {!loading && orders.length > 0 && (
         <>
           <div className="hidden xl:block bg-white rounded-2xl border border-gray-100 overflow-hidden w-full" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <div className="grid px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "200px 1fr 160px 110px 160px" }}>
+            <div className="grid px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "180px 1fr 140px 100px 200px" }}>
               <span>Order ID</span>
               <span>Details</span>
               <span>Vendor</span>
               <span>SLA</span>
-              <span className="text-right">Actions</span>
+              <span className="text-right pr-2">Actions</span>
             </div>
             {orders.map(o => (
-              <div key={o.id} className={`grid px-5 py-4 border-b border-gray-50 last:border-0 items-center gap-2 ${done.includes(o.id) ? "opacity-50" : ""}`} style={{ gridTemplateColumns: "200px 1fr 160px 110px 160px" }}>
+              <div key={o.id} className={`grid px-5 py-4 border-b border-gray-50 last:border-0 items-center gap-3 ${done.includes(o.id) ? "opacity-50" : ""}`} style={{ gridTemplateColumns: "180px 1fr 140px 100px 200px" }}>
                 <span className="text-xs font-mono font-bold text-gray-700 truncate" title={o.id}>{o.id}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{o.type}</p>
@@ -146,17 +146,17 @@ export default function OpsOrderQueuePage() {
                   {!done.includes(o.id) && (
                     <>
                       <button onClick={() => { setModal({ type: "reassign", orderId: o.id }); setReason(""); setVendor(""); }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-700 transition">
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-700 transition whitespace-nowrap">
                         <RefreshCw size={11} /> Reassign
                       </button>
                       <button onClick={() => { setModal({ type: "clarify", orderId: o.id }); setClarifyMsg(""); }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 transition">
+                        className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 transition whitespace-nowrap">
                         <MessageSquare size={11} /> Clarify
                       </button>
                     </>
                   )}
                   {done.includes(o.id) && (
-                    <span className="flex items-center gap-1 text-xs font-bold text-green-600">
+                    <span className="flex items-center gap-1 text-xs font-bold text-green-600 whitespace-nowrap">
                       <CheckCircle size={12} /> Done
                     </span>
                   )}

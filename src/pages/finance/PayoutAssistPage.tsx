@@ -81,29 +81,29 @@ export default function PayoutAssistPage() {
 
       {!loading && payouts.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div className="grid grid-cols-5 px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide">
-            <span className="col-span-2">Vendor</span>
+          <div className="grid px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "1fr 140px 140px 180px" }}>
+            <span>Vendor</span>
             <span>Amount</span>
             <span>Status</span>
-            <span className="text-right">Action</span>
+            <span className="text-right pr-2">Action</span>
           </div>
           {payouts.map(p => (
-            <div key={p.id} className="grid grid-cols-5 px-5 py-4 border-b border-gray-50 last:border-0 items-center">
-              <div className="col-span-2">
-                <p className="text-sm font-bold text-gray-900">{p.vendor}</p>
-                <p className="text-xs text-gray-400">{p.period} · Due {p.date}</p>
+            <div key={p.id} className="grid px-5 py-4 border-b border-gray-50 last:border-0 items-center" style={{ gridTemplateColumns: "1fr 140px 140px 180px" }}>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">{p.vendor}</p>
+                <p className="text-xs text-gray-400 truncate">{p.period} · Due {p.date}</p>
               </div>
-              <span className="text-sm font-black text-gray-900">Rs.{p.amount}</span>
-              <span className={`text-xs px-2.5 py-1 rounded-full font-semibold w-fit ${statusColor[p.status] || "bg-gray-100 text-gray-600"}`}>{p.status}</span>
+              <span className="text-sm font-black text-gray-900 truncate">₹{p.amount}</span>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-semibold w-fit truncate ${statusColor[p.status] || "bg-gray-100 text-gray-600"}`}>{p.status}</span>
               <div className="flex justify-end">
                 {p.status === "issue" && !raised.includes(p.id) && (
                   <button onClick={() => setTicketModal({ id: p.id, vendor: p.vendor })}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-orange-200 text-orange-600 text-xs font-bold rounded-xl hover:bg-orange-50 transition">
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-orange-200 text-orange-600 text-xs font-bold rounded-xl hover:bg-orange-50 transition whitespace-nowrap">
                     <AlertTriangle size={12} /> Raise Ticket
                   </button>
                 )}
                 {raised.includes(p.id) && (
-                  <span className="flex items-center gap-1 text-xs font-bold text-green-600">
+                  <span className="flex items-center gap-1 text-xs font-bold text-green-600 whitespace-nowrap">
                     <CheckCircle size={12} /> Ticket Raised
                   </span>
                 )}

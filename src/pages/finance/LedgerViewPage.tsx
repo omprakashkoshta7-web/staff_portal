@@ -50,20 +50,20 @@ export default function LedgerViewPage() {
 
       {!loading && entries.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div className="grid grid-cols-5 px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide">
+          <div className="grid px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "150px 120px 1fr 120px 140px" }}>
             <span>Entry ID</span>
             <span>Type</span>
             <span>Reference</span>
             <span>Amount</span>
-            <span className="text-right">Date</span>
+            <span className="text-right pr-2">Date</span>
           </div>
           {entries.map(e => (
-            <div key={e.id} className="grid grid-cols-5 px-5 py-4 border-b border-gray-50 last:border-0 items-center">
-              <span className="text-xs font-bold text-gray-700">{e.id}</span>
-              <span className="text-sm text-gray-700">{e.type}</span>
-              <span className="text-xs text-gray-500">{e.ref}</span>
-              <span className={`text-sm font-black ${e.amount.startsWith("+") ? "text-green-600" : "text-red-500"}`}>{e.amount}</span>
-              <span className="text-xs text-gray-400 text-right">{e.date}</span>
+            <div key={e.id} className="grid px-5 py-4 border-b border-gray-50 last:border-0 items-center" style={{ gridTemplateColumns: "150px 120px 1fr 120px 140px" }}>
+              <span className="text-xs font-bold text-gray-700 truncate">{e.id}</span>
+              <span className="text-sm text-gray-700 truncate">{e.type}</span>
+              <span className="text-xs text-gray-500 truncate">{e.ref}</span>
+              <span className={`text-sm font-black truncate ${e.amount.startsWith("+") ? "text-green-600" : "text-red-500"}`}>{e.amount}</span>
+              <span className="text-xs text-gray-400 text-right truncate">{e.date}</span>
             </div>
           ))}
         </div>
