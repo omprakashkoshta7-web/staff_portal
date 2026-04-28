@@ -192,9 +192,9 @@ export default function StaffLayout() {
             </div>
             <button
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/72 hover:bg-white/5 hover:text-white transition-all"
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-white/60 hover:bg-white/5 hover:text-white transition-all"
             >
-              <LogOut size={15} />
+              <LogOut size={14} />
               Logout
             </button>
           </div>
@@ -367,7 +367,7 @@ export default function StaffLayout() {
               ))}
               <button
                 onClick={handleLogout}
-                className="whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition bg-red-50 text-red-600 shadow-[0_8px_18px_rgba(15,23,42,0.06)] hover:bg-red-100 flex items-center gap-2"
+                className="whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition bg-white/85 text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.06)] hover:bg-slate-100 flex items-center gap-2"
               >
                 <LogOut size={14} />
                 Logout
