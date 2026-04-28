@@ -57,7 +57,7 @@ const ALERT_BG = { critical: "#fef2f2", warning: "#fffbeb", info: "#eff6ff" };
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { role, user } = useStaffRole();
+  const { role } = useStaffRole();
 
   const [dashData, setDashData] = useState<{ kpis: any[]; tasks: any[]; alerts: any[] }>({ kpis: [], tasks: [], alerts: [] });
   const [orderStats, setOrderStats] = useState({ total: 0, critical: 0, pending: 0 });
