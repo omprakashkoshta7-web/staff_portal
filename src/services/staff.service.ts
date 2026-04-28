@@ -1,5 +1,4 @@
 import STAFF_API_CONFIG from '../config/api.config';
-import { auth, isFirebaseConfigured } from '../config/firebase';
 
 interface AuthResponse {
   success: boolean;
