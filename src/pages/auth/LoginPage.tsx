@@ -65,8 +65,18 @@ export default function LoginPage() {
         scopes: authResponse.user.scopes,
       });
 
-      console.log("🚀 LoginPage: Navigating to dashboard with team =", authResponse.user.team);
-      navigate("/dashboard");
+      // Navigate to team-specific page
+      const teamRoutes: Record<Role, string> = {
+        ops: "/ops/orders",
+        support: "/support/tickets",
+        finance: "/finance/refunds",
+        marketing: "/marketing/campaigns"
+      };
+      
+      const targetRoute = teamRoutes[authResponse.user.team] || "/dashboard";
+      console.log("🚀 LoginPage: Navigating to", targetRoute, "for team", authResponse.user.team);
+      
+      navigate(targetRoute);
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
     } finally {

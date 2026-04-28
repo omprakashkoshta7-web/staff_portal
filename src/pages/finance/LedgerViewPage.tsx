@@ -50,7 +50,7 @@ export default function LedgerViewPage() {
 
       {!loading && entries.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div className="grid px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "150px 120px 1fr 120px 140px" }}>
+          <div className="grid px-4 py-2.5 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "140px 110px 1fr 110px 130px", gap: "12px" }}>
             <span>Entry ID</span>
             <span>Type</span>
             <span>Reference</span>
@@ -58,7 +58,7 @@ export default function LedgerViewPage() {
             <span className="text-right pr-2">Date</span>
           </div>
           {entries.map(e => (
-            <div key={e.id} className="grid px-5 py-4 border-b border-gray-50 last:border-0 items-center" style={{ gridTemplateColumns: "150px 120px 1fr 120px 140px" }}>
+            <div key={e.id} className="grid px-4 py-3 border-b border-gray-50 last:border-0 items-center" style={{ gridTemplateColumns: "140px 110px 1fr 110px 130px", gap: "12px" }}>
               <span className="text-xs font-bold text-gray-700 truncate">{e.id}</span>
               <span className="text-sm text-gray-700 truncate">{e.type}</span>
               <span className="text-xs text-gray-500 truncate">{e.ref}</span>

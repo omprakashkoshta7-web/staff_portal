@@ -121,7 +121,7 @@ export default function OpsOrderQueuePage() {
       {!loading && orders.length > 0 && (
         <>
           <div className="hidden xl:block bg-white rounded-2xl border border-gray-100 overflow-hidden w-full" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <div className="grid px-5 py-3 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "180px 1fr 140px 100px 200px" }}>
+            <div className="grid px-4 py-2.5 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "160px 1fr 120px 90px 180px", gap: "12px" }}>
               <span>Order ID</span>
               <span>Details</span>
               <span>Vendor</span>
@@ -129,7 +129,7 @@ export default function OpsOrderQueuePage() {
               <span className="text-right pr-2">Actions</span>
             </div>
             {orders.map(o => (
-              <div key={o.id} className={`grid px-5 py-4 border-b border-gray-50 last:border-0 items-center gap-3 ${done.includes(o.id) ? "opacity-50" : ""}`} style={{ gridTemplateColumns: "180px 1fr 140px 100px 200px" }}>
+              <div key={o.id} className={`grid px-4 py-3 border-b border-gray-50 last:border-0 items-center ${done.includes(o.id) ? "opacity-50" : ""}`} style={{ gridTemplateColumns: "160px 1fr 120px 90px 180px", gap: "12px" }}>
                 <span className="text-xs font-mono font-bold text-gray-700 truncate" title={o.id}>{o.id}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{o.type}</p>
@@ -138,26 +138,26 @@ export default function OpsOrderQueuePage() {
                     style={{ backgroundColor: riskBg[o.risk], color: riskColor[o.risk] }}>{o.status}</span>
                 </div>
                 <span className="text-xs text-gray-600 truncate">{o.vendor}</span>
-                <div className="flex items-center gap-1.5">
-                  {o.risk === "critical" && <AlertTriangle size={12} className="text-red-500" />}
-                  <span className="text-xs font-bold" style={{ color: riskColor[o.risk] }}>{o.sla}</span>
+                <div className="flex items-center gap-1">
+                  {o.risk === "critical" && <AlertTriangle size={11} className="text-red-500" />}
+                  <span className="text-xs font-bold truncate" style={{ color: riskColor[o.risk] }}>{o.sla}</span>
                 </div>
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-1.5">
                   {!done.includes(o.id) && (
                     <>
                       <button onClick={() => { setModal({ type: "reassign", orderId: o.id }); setReason(""); setVendor(""); }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-700 transition whitespace-nowrap">
-                        <RefreshCw size={11} /> Reassign
+                        className="flex items-center gap-1 px-2 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-700 transition whitespace-nowrap">
+                        <RefreshCw size={10} /> Reassign
                       </button>
                       <button onClick={() => { setModal({ type: "clarify", orderId: o.id }); setClarifyMsg(""); }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 transition whitespace-nowrap">
-                        <MessageSquare size={11} /> Clarify
+                        className="flex items-center gap-1 px-2 py-1.5 border border-gray-200 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-50 transition whitespace-nowrap">
+                        <MessageSquare size={10} /> Clarify
                       </button>
                     </>
                   )}
                   {done.includes(o.id) && (
                     <span className="flex items-center gap-1 text-xs font-bold text-green-600 whitespace-nowrap">
-                      <CheckCircle size={12} /> Done
+                      <CheckCircle size={11} /> Done
                     </span>
                   )}
                 </div>
