@@ -44,31 +44,41 @@ export interface StaffAuthUser {
   scopes: string[];
 }
 
-const mapStaffUser = (user: VerifyUser, fallbackTeam: StaffTeam): StaffAuthUser => ({
-  uid: user.firebaseUid || user._id,
-  email: user.email || "",
-  displayName: user.name || undefined,
-  role: user.role === "admin" ? "admin" : "staff",
-  team: user.staffProfile?.team || fallbackTeam,
-  permissions: user.staffProfile?.permissions || [],
-  scopes: user.staffProfile?.scopes || [],
-});
+const mapStaffUser = (user: VerifyUser, fallbackTeam: StaffTeam): StaffAuthUser => {
+  // Always use fallbackTeam if provided, as it comes from user's selection
+  // Only use staffProfile.team if it's a valid team value
+  const validTeams: StaffTeam[] = ["ops", "support", "finance", "marketing"];
+  const backendTeam = user.staffProfile?.team;
+  const finalTeam = (backendTeam && validTeams.includes(backendTeam)) ? backendTeam : fallbackTeam;
+  
+  return {
+    uid: user.firebaseUid || user._id,
+    email: user.email || "",
+    displayName: user.name || undefined,
+    role: user.role === "admin" ? "admin" : "staff",
+    team: finalTeam,
+    permissions: user.staffProfile?.permissions || [],
+    scopes: user.staffProfile?.scopes || [],
+  };
+};
 
 export const setStoredSession = (token: string, user: VerifyUser, team?: StaffTeam) => {
   localStorage.setItem(STAFF_TOKEN_KEY, token);
-  // If team is provided and user doesn't have it in staffProfile, add it
-  if (team && (!user.staffProfile || !user.staffProfile.team)) {
-    user = {
+  
+  // Always ensure the team is set in staffProfile
+  if (team) {
+    const updatedUser = {
       ...user,
       staffProfile: {
-        ...user.staffProfile,
         team,
         permissions: user.staffProfile?.permissions || [],
         scopes: user.staffProfile?.scopes || [],
       },
     };
+    localStorage.setItem(STAFF_USER_KEY, JSON.stringify(updatedUser));
+  } else {
+    localStorage.setItem(STAFF_USER_KEY, JSON.stringify(user));
   }
-  localStorage.setItem(STAFF_USER_KEY, JSON.stringify(user));
 };
 
 export const clearStoredSession = () => {
@@ -158,6 +168,8 @@ export const loginWithFirebase = async (
   }
 
   try {
+    console.log("🔐 Login attempt with team:", fallbackTeam);
+    
     // Step 1: Firebase sign-in
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
@@ -166,11 +178,17 @@ export const loginWithFirebase = async (
 
     // Step 3: Exchange for backend JWT
     const { user, token } = await exchangeFirebaseToken(firebaseIdToken);
+    
+    console.log("📦 Backend response - user.staffProfile:", user.staffProfile);
+    console.log("✅ Using team:", fallbackTeam);
 
     // Step 4: Store the backend JWT (not the Firebase token) with the fallback team
     setStoredSession(token, user, fallbackTeam);
 
-    return { user: mapStaffUser(user, fallbackTeam), token };
+    const mappedUser = mapStaffUser(user, fallbackTeam);
+    console.log("👤 Final mapped user team:", mappedUser.team);
+
+    return { user: mappedUser, token };
   } catch (error) {
     const authError = error as AuthError & { message?: string };
 
@@ -221,15 +239,22 @@ export const syncStaffAuthSession = (
     if (storedToken && storedUserRaw) {
       try {
         const storedUser: VerifyUser = JSON.parse(storedUserRaw);
-        // Use the stored team from staffProfile, don't default to "ops"
+        console.log("🔄 Restoring session - stored team:", storedUser.staffProfile?.team);
+        
+        // Use the stored team from staffProfile (which was set during login)
         const userTeam = storedUser.staffProfile?.team || "ops";
+        const mappedUser = mapStaffUser(storedUser, userTeam);
+        
+        console.log("✅ Restored user team:", mappedUser.team);
+        
         onAuthenticated({
-          user: mapStaffUser(storedUser, userTeam),
+          user: mappedUser,
           token: storedToken,
         });
         return;
       } catch {
         // Corrupted storage — fall through to re-exchange
+        console.log("❌ Failed to restore session from storage");
       }
     }
 
