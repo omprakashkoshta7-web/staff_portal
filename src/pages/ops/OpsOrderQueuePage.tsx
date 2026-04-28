@@ -121,7 +121,7 @@ export default function OpsOrderQueuePage() {
       {!loading && orders.length > 0 && (
         <>
           <div className="hidden xl:block bg-white rounded-2xl border border-gray-100 overflow-hidden w-full" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <div className="grid px-4 py-2.5 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "160px 1fr 120px 90px 180px", gap: "12px" }}>
+            <div className="grid px-4 py-2.5 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wide" style={{ gridTemplateColumns: "160px 200px 130px 90px 170px", gap: "12px" }}>
               <span>Order ID</span>
               <span>Details</span>
               <span>Vendor</span>
@@ -129,7 +129,7 @@ export default function OpsOrderQueuePage() {
               <span className="text-right pr-2">Actions</span>
             </div>
             {orders.map(o => (
-              <div key={o.id} className={`grid px-4 py-3 border-b border-gray-50 last:border-0 items-center ${done.includes(o.id) ? "opacity-50" : ""}`} style={{ gridTemplateColumns: "160px 1fr 120px 90px 180px", gap: "12px" }}>
+              <div key={o.id} className={`grid px-4 py-3 border-b border-gray-50 last:border-0 items-center ${done.includes(o.id) ? "opacity-50" : ""}`} style={{ gridTemplateColumns: "160px 200px 130px 90px 170px", gap: "12px" }}>
                 <span className="text-xs font-mono font-bold text-gray-700 truncate" title={o.id}>{o.id}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">{o.type}</p>
