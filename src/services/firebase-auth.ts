@@ -8,9 +8,12 @@ import { auth, isFirebaseConfigured } from "../config/firebase";
 import STAFF_API_CONFIG from "../config/api.config";
 
 const STAFF_TOKEN_KEY = "staffToken";
-const STAFF_USER_KEY = "staff_user";
+const STAFF_USER_KEY  = "staff_user";
+const STAFF_TEAM_KEY  = "staff_selected_team"; // ← persists the team the user picked
 
 export type StaffTeam = "ops" | "support" | "finance" | "marketing";
+
+const VALID_TEAMS: StaffTeam[] = ["ops", "support", "finance", "marketing"];
 
 type VerifyUser = {
   _id: string;
@@ -44,58 +47,68 @@ export interface StaffAuthUser {
   scopes: string[];
 }
 
-const mapStaffUser = (user: VerifyUser, fallbackTeam: StaffTeam): StaffAuthUser => {
-  // Always use fallbackTeam if provided, as it comes from user's selection
-  // Only use staffProfile.team if it's a valid team value
-  const validTeams: StaffTeam[] = ["ops", "support", "finance", "marketing"];
-  const backendTeam = user.staffProfile?.team;
-  const finalTeam = (backendTeam && validTeams.includes(backendTeam)) ? backendTeam : fallbackTeam;
-  
-  return {
-    uid: user.firebaseUid || user._id,
-    email: user.email || "",
-    displayName: user.name || undefined,
-    role: user.role === "admin" ? "admin" : "staff",
-    team: finalTeam,
-    permissions: user.staffProfile?.permissions || [],
-    scopes: user.staffProfile?.scopes || [],
-  };
-};
+/** Resolve team: prefer explicitly stored selected team, then staffProfile, then fallback */
+function resolveTeam(
+  selectedTeam: StaffTeam | null,
+  profileTeam: StaffTeam | undefined,
+  fallback: StaffTeam
+): StaffTeam {
+  if (selectedTeam && VALID_TEAMS.includes(selectedTeam)) return selectedTeam;
+  if (profileTeam  && VALID_TEAMS.includes(profileTeam))  return profileTeam;
+  return fallback;
+}
 
-export const setStoredSession = (token: string, user: VerifyUser, team?: StaffTeam) => {
+const mapStaffUser = (
+  user: VerifyUser,
+  team: StaffTeam
+): StaffAuthUser => ({
+  uid: user.firebaseUid || user._id,
+  email: user.email || "",
+  displayName: user.name || undefined,
+  role: user.role === "admin" ? "admin" : "staff",
+  team,
+  permissions: user.staffProfile?.permissions || [],
+  scopes: user.staffProfile?.scopes || [],
+});
+
+// ─── Storage helpers ──────────────────────────────────────────────────────────
+
+export const setStoredSession = (
+  token: string,
+  user: VerifyUser,
+  team: StaffTeam
+) => {
+  // Always overwrite the team key first so it's available even before user JSON is written
+  localStorage.setItem(STAFF_TEAM_KEY, team);
   localStorage.setItem(STAFF_TOKEN_KEY, token);
-  
-  // Always ensure the team is set in staffProfile
-  if (team) {
-    const updatedUser = {
-      ...user,
-      staffProfile: {
-        team,
-        permissions: user.staffProfile?.permissions || [],
-        scopes: user.staffProfile?.scopes || [],
-      },
-    };
-    localStorage.setItem(STAFF_USER_KEY, JSON.stringify(updatedUser));
-  } else {
-    localStorage.setItem(STAFF_USER_KEY, JSON.stringify(user));
-  }
+
+  const userWithTeam: VerifyUser = {
+    ...user,
+    staffProfile: {
+      team,
+      permissions: user.staffProfile?.permissions || [],
+      scopes:      user.staffProfile?.scopes      || [],
+    },
+  };
+  localStorage.setItem(STAFF_USER_KEY, JSON.stringify(userWithTeam));
 };
 
 export const clearStoredSession = () => {
   localStorage.removeItem(STAFF_TOKEN_KEY);
   localStorage.removeItem(STAFF_USER_KEY);
+  localStorage.removeItem(STAFF_TEAM_KEY);
 };
 
-export const getStoredToken = (): string | null => {
-  return localStorage.getItem(STAFF_TOKEN_KEY);
+export const getStoredToken = (): string | null =>
+  localStorage.getItem(STAFF_TOKEN_KEY);
+
+export const getStoredTeam = (): StaffTeam | null => {
+  const t = localStorage.getItem(STAFF_TEAM_KEY);
+  return t && VALID_TEAMS.includes(t as StaffTeam) ? (t as StaffTeam) : null;
 };
 
-/**
- * Exchange a Firebase ID token for a backend JWT.
- *
- * Sends the Firebase token in the Authorization header (not the body),
- * as required by the /api/auth/verify spec.
- */
+// ─── Token exchange ───────────────────────────────────────────────────────────
+
 async function exchangeFirebaseToken(
   firebaseIdToken: string
 ): Promise<{ user: VerifyUser; token: string }> {
@@ -112,38 +125,25 @@ async function exchangeFirebaseToken(
   );
 
   const payload = (await response.json().catch(() => ({}))) as VerifyResponse & {
-    // Handle legacy response shape where data is at root level
     user?: VerifyUser;
     token?: string;
   };
 
   if (!response.ok) {
-    console.error("Token exchange failed:", { status: response.status, payload });
     throw new Error(payload.message || "Staff login failed");
   }
 
-  // Support both { data: { token, user } } and legacy { token, user } shapes
   const token = payload.data?.token ?? (payload as any).token;
-  let user = payload.data?.user ?? (payload as any).user;
+  let user: VerifyUser = payload.data?.user ?? (payload as any).user;
 
-  if (!token) {
-    console.error("No token in response:", payload);
-    throw new Error("Staff session token was not returned by the server");
-  }
+  if (!token) throw new Error("Staff session token was not returned by the server");
 
-  // If user data is missing, create a default user object
   if (!user) {
-    console.warn("No user data in response, creating default user object");
     user = {
       _id: "staff_user",
-      email: "staff@speedcopy.com",
+      email: "",
       role: "staff",
-      name: "Staff User",
-      staffProfile: {
-        team: "ops",
-        permissions: [],
-        scopes: [],
-      },
+      staffProfile: { team: "ops", permissions: [], scopes: [] },
     };
   }
 
@@ -154,49 +154,43 @@ async function exchangeFirebaseToken(
   return { user, token };
 }
 
-/**
- * Sign in with Firebase email/password, then exchange the Firebase ID token
- * for a short backend JWT. Stores the backend JWT — not the Firebase token.
- */
+// ─── Login ────────────────────────────────────────────────────────────────────
+
 export const loginWithFirebase = async (
   email: string,
   password: string,
-  fallbackTeam: StaffTeam
+  selectedTeam: StaffTeam          // ← the team the user clicked on the login page
 ): Promise<{ user: StaffAuthUser; token: string }> => {
   if (!isFirebaseConfigured) {
     throw new Error("Firebase login is not configured for this staff app");
   }
 
   try {
-    // Step 1: Firebase sign-in
+    // Persist the selected team BEFORE Firebase sign-in so that
+    // onAuthStateChanged (which fires during signIn) can read it immediately.
+    localStorage.setItem(STAFF_TEAM_KEY, selectedTeam);
+
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-    // Step 2: Get Firebase ID token (used only once)
     const firebaseIdToken = await userCredential.user.getIdToken();
-
-    // Step 3: Exchange for backend JWT
     const { user, token } = await exchangeFirebaseToken(firebaseIdToken);
 
-    // Step 4: Store with the selected team (fallbackTeam always wins)
-    setStoredSession(token, user, fallbackTeam);
+    // Store session with the selected team (overrides whatever backend returned)
+    setStoredSession(token, user, selectedTeam);
 
-    return { user: mapStaffUser(user, fallbackTeam), token };
+    return { user: mapStaffUser(user, selectedTeam), token };
   } catch (error) {
     const authError = error as AuthError & { message?: string };
-
     if (authError.code === "auth/invalid-credential") {
       throw new Error(
         "Firebase rejected these credentials. Check the staff account in Firebase and try again."
       );
     }
-
     throw new Error(authError.message || "Staff login failed");
   }
 };
 
-/**
- * Sign out from Firebase and clear the stored backend JWT.
- */
+// ─── Logout ───────────────────────────────────────────────────────────────────
+
 export const logoutFirebase = async (): Promise<void> => {
   try {
     await signOut(auth);
@@ -205,14 +199,8 @@ export const logoutFirebase = async (): Promise<void> => {
   }
 };
 
-/**
- * Sync the staff auth session on app load.
- *
- * On Firebase auth state change:
- * - If a user is present and a backend JWT is already stored, restore the session.
- * - If a user is present but no JWT, re-exchange the Firebase token.
- * - If no user, clear everything and call onUnauthenticated.
- */
+// ─── Session sync (app load / refresh) ───────────────────────────────────────
+
 export const syncStaffAuthSession = (
   onAuthenticated: (session: { user: StaffAuthUser; token: string }) => void,
   onUnauthenticated: () => void
@@ -224,35 +212,43 @@ export const syncStaffAuthSession = (
       return;
     }
 
-    // If we already have a backend JWT stored, restore the session from storage.
-    const storedToken = getStoredToken();
+    const storedToken   = getStoredToken();
+    const storedTeam    = getStoredTeam();          // ← read the persisted team key
     const storedUserRaw = localStorage.getItem(STAFF_USER_KEY);
 
+    // ── Restore from storage ──────────────────────────────────────────────────
     if (storedToken && storedUserRaw) {
       try {
         const storedUser: VerifyUser = JSON.parse(storedUserRaw);
-        const userTeam = storedUser.staffProfile?.team || "ops";
-        onAuthenticated({
-          user: mapStaffUser(storedUser, userTeam),
-          token: storedToken,
-        });
+
+        // Priority: STAFF_TEAM_KEY > staffProfile.team > "ops"
+        const team = resolveTeam(
+          storedTeam,
+          storedUser.staffProfile?.team,
+          "ops"
+        );
+
+        onAuthenticated({ user: mapStaffUser(storedUser, team), token: storedToken });
         return;
       } catch {
         // Corrupted storage — fall through to re-exchange
       }
     }
 
-    // No valid JWT stored — re-exchange the Firebase token.
+    // ── Re-exchange Firebase token ────────────────────────────────────────────
     try {
       const firebaseIdToken = await firebaseUser.getIdToken();
       const { user, token } = await exchangeFirebaseToken(firebaseIdToken);
-      // When re-exchanging, use the team from user's staffProfile or default to ops
-      const userTeam = user.staffProfile?.team || "ops";
-      setStoredSession(token, user, userTeam);
-      onAuthenticated({
-        user: mapStaffUser(user, userTeam),
-        token,
-      });
+
+      // Use the persisted selected team if available, else staffProfile, else "ops"
+      const team = resolveTeam(
+        storedTeam,
+        user.staffProfile?.team,
+        "ops"
+      );
+
+      setStoredSession(token, user, team);
+      onAuthenticated({ user: mapStaffUser(user, team), token });
     } catch {
       clearStoredSession();
       await signOut(auth).catch(() => undefined);
