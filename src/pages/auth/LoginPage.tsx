@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, UserCircle } from "lucide-react";
 import { useStaffRole } from "../../context/StaffContext";
@@ -16,25 +16,11 @@ const roleOptions: { value: Role; label: string; color: string }[] = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setRole, setUser, setToken, logout } = useStaffRole();
+  const { setRole, setUser, setToken } = useStaffRole();
   const [form, setForm] = useState({ email: "", password: "", role: "ops" as Role });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Clear any existing session on mount
-  useEffect(() => {
-    const clearSession = async () => {
-      try {
-        await logout();
-        localStorage.clear(); // Clear all localStorage
-        console.log("🧹 LoginPage: Cleared existing session");
-      } catch (err) {
-        console.log("⚠️ LoginPage: Error clearing session", err);
-      }
-    };
-    void clearSession();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,12 +33,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log("🎯 LoginPage: Selected team =", form.role);
-      
+      // Clear old session data before new login
+      localStorage.removeItem("staffToken");
+      localStorage.removeItem("staff_user");
+
       const authResponse = await loginWithFirebase(form.email, form.password, form.role);
 
-      console.log("✅ LoginPage: Auth response team =", authResponse.user.team);
-      
       setToken(authResponse.token);
       setRole(authResponse.user.team);
       setUser({
@@ -65,18 +51,15 @@ export default function LoginPage() {
         scopes: authResponse.user.scopes,
       });
 
-      // Navigate to team-specific page
+      // Navigate directly to team-specific page
       const teamRoutes: Record<Role, string> = {
         ops: "/ops/orders",
         support: "/support/tickets",
         finance: "/finance/refunds",
-        marketing: "/marketing/campaigns"
+        marketing: "/marketing/campaigns",
       };
-      
-      const targetRoute = teamRoutes[authResponse.user.team] || "/dashboard";
-      console.log("🚀 LoginPage: Navigating to", targetRoute, "for team", authResponse.user.team);
-      
-      navigate(targetRoute);
+
+      navigate(teamRoutes[authResponse.user.team] ?? "/dashboard", { replace: true });
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
     } finally {

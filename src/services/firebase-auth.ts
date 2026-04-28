@@ -168,8 +168,6 @@ export const loginWithFirebase = async (
   }
 
   try {
-    console.log("🔐 Login attempt with team:", fallbackTeam);
-    
     // Step 1: Firebase sign-in
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
@@ -178,17 +176,11 @@ export const loginWithFirebase = async (
 
     // Step 3: Exchange for backend JWT
     const { user, token } = await exchangeFirebaseToken(firebaseIdToken);
-    
-    console.log("📦 Backend response - user.staffProfile:", user.staffProfile);
-    console.log("✅ Using team:", fallbackTeam);
 
-    // Step 4: Store the backend JWT (not the Firebase token) with the fallback team
+    // Step 4: Store with the selected team (fallbackTeam always wins)
     setStoredSession(token, user, fallbackTeam);
 
-    const mappedUser = mapStaffUser(user, fallbackTeam);
-    console.log("👤 Final mapped user team:", mappedUser.team);
-
-    return { user: mappedUser, token };
+    return { user: mapStaffUser(user, fallbackTeam), token };
   } catch (error) {
     const authError = error as AuthError & { message?: string };
 
@@ -239,22 +231,14 @@ export const syncStaffAuthSession = (
     if (storedToken && storedUserRaw) {
       try {
         const storedUser: VerifyUser = JSON.parse(storedUserRaw);
-        console.log("🔄 Restoring session - stored team:", storedUser.staffProfile?.team);
-        
-        // Use the stored team from staffProfile (which was set during login)
         const userTeam = storedUser.staffProfile?.team || "ops";
-        const mappedUser = mapStaffUser(storedUser, userTeam);
-        
-        console.log("✅ Restored user team:", mappedUser.team);
-        
         onAuthenticated({
-          user: mappedUser,
+          user: mapStaffUser(storedUser, userTeam),
           token: storedToken,
         });
         return;
       } catch {
         // Corrupted storage — fall through to re-exchange
-        console.log("❌ Failed to restore session from storage");
       }
     }
 
