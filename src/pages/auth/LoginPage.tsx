@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, UserCircle } from "lucide-react";
 import { useStaffRole } from "../../context/StaffContext";
@@ -16,11 +16,25 @@ const roleOptions: { value: Role; label: string; color: string }[] = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setRole, setUser, setToken } = useStaffRole();
+  const { setRole, setUser, setToken, logout } = useStaffRole();
   const [form, setForm] = useState({ email: "", password: "", role: "ops" as Role });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Clear any existing session on mount
+  useEffect(() => {
+    const clearSession = async () => {
+      try {
+        await logout();
+        localStorage.clear(); // Clear all localStorage
+        console.log("🧹 LoginPage: Cleared existing session");
+      } catch (err) {
+        console.log("⚠️ LoginPage: Error clearing session", err);
+      }
+    };
+    void clearSession();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +47,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      console.log("🎯 LoginPage: Selected team =", form.role);
+      
       const authResponse = await loginWithFirebase(form.email, form.password, form.role);
 
+      console.log("✅ LoginPage: Auth response team =", authResponse.user.team);
+      
       setToken(authResponse.token);
       setRole(authResponse.user.team);
       setUser({
@@ -47,6 +65,7 @@ export default function LoginPage() {
         scopes: authResponse.user.scopes,
       });
 
+      console.log("🚀 LoginPage: Navigating to dashboard with team =", authResponse.user.team);
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");

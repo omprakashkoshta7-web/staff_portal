@@ -66,6 +66,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
     const unsubscribe = syncStaffAuthSession(
       ({ user: sessionUser, token: sessionToken }) => {
         const mappedUser = mapContextUser(sessionUser);
+        console.log("🔄 StaffContext: Session restored with team =", mappedUser.team);
         setUser(mappedUser);
         setRole(mappedUser.team);
         setToken(sessionToken);
@@ -74,6 +75,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       },
       () => {
+        console.log("❌ StaffContext: No session, resetting to ops");
         setUser(null);
         setRole("ops");
         setToken(null);
